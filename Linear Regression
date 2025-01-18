@@ -1,0 +1,148 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from pandas import read_csv
+
+def normalize(X):
+    """Normalizes the data."""
+    return (X - X.mean()) / X.std()
+
+def cost_function(X, y, theta):
+    """Calculates the cost function (MSE)."""
+    m = len(y)
+    predictions = X.dot(theta)
+    cost = (1 / (2 * m)) * np.sum(np.square(predictions - y))
+    return cost
+
+def gradient_descent(X, y, theta, learning_rate, iterations):
+    """Performs gradient descent."""
+    m = len(y)
+    cost_history = []
+
+    for _ in range(iterations):
+        predictions = X.dot(theta)
+        errors = predictions - y
+        theta = theta - (learning_rate / m) * X.T.dot(errors)
+        cost_history.append(cost_function(X, y, theta))
+
+    return theta, cost_history
+
+def stochastic_gradient_descent(X, y, theta, learning_rate, iterations):
+    """Performs stochastic gradient descent."""
+    m = len(y)
+    cost_history = []
+
+    for _ in range(iterations):
+        random_index = np.random.randint(0, m)
+        xi = X[random_index:random_index + 1]
+        yi = y[random_index:random_index + 1]
+        predictions = xi.dot(theta)
+        errors = predictions - yi
+        theta = theta - learning_rate * xi.T.dot(errors) 
+        cost_history.append(cost_function(X, y, theta)) 
+
+    return theta, cost_history
+
+def mini_batch_gradient_descent(X, y, theta, learning_rate, iterations, batch_size):
+    """Performs mini-batch gradient descent."""
+    m = len(y)
+    cost_history = []
+
+    for _ in range(iterations):
+        # Randomly select a batch
+        indices = np.random.permutation(m)[:batch_size]
+        X_batch = X[indices]
+        y_batch = y[indices]
+
+        predictions = X_batch.dot(theta)
+        errors = predictions - y_batch
+        theta = theta - (learning_rate / batch_size) * X_batch.T.dot(errors)
+        cost_history.append(cost_function(X, y, theta))
+
+    return theta, cost_history
+
+# --- Load your data (replace placeholders) ---
+filename1 = r"/content/linearX.csv"
+filename2 = r"/content/linearY.csv"
+names1 = ['xxxxxxxz']
+names2 = ['zzzzzzzz']
+dataframe1 = read_csv(filename1, names=names1)
+dataframe2 = read_csv(filename2, names=names2)
+X = dataframe1['xxxxxxxz'].values.reshape(-1, 1)
+y = dataframe2['zzzzzzzz'].values  
+
+# --- Data preprocessing ---
+X = normalize(X)
+X = np.c_[np.ones(X.shape[0]), X]
+
+# --- Hyperparameters ---
+learning_rate = 0.5  
+iterations = 1000  
+convergence_threshold = 1e-6
+
+# --- Training the model ---
+theta, cost_history = gradient_descent(X, y, np.zeros(X.shape[1]), learning_rate, iterations)
+
+# --- Convergence Check ---
+converged = False
+for i in range(1, len(cost_history)):
+    if abs(cost_history[i] - cost_history[i - 1]) < convergence_threshold:
+        converged = True
+        print(f"Converged after {i} iterations.")
+        break
+
+if not converged:
+    print("Did not converge within the specified iterations.")
+
+# --- Results ---
+print("Learned parameters (theta):", theta)
+print("Final cost function value:", cost_history[-1])
+
+# --- Plotting cost vs. iteration (first 50) ---
+plt.plot(range(50), cost_history[:50])
+plt.xlabel("Iteration")
+plt.ylabel("Cost Function")
+plt.title("Cost Function vs. Iteration")
+plt.show()
+
+# --- Plotting the regression line ---
+plt.scatter(X[:, 1], y, label="Data Points")  # Original X values
+plt.plot(X[:, 1], X.dot(theta), color='red', label="Regression Line")
+plt.xlabel("Independent Variable (xxxxxxxz)")
+plt.ylabel("Dependent Variable (zzzzzzzz)")
+plt.title("Linear Regression Fit")
+plt.legend()
+plt.show()
+
+# --- Experiments with different learning rates ---
+learning_rates = [0.005, 0.5, 5]
+for lr in learning_rates:
+    _, cost_history = gradient_descent(X, y, np.zeros(X.shape[1]), lr, 50)
+    plt.plot(range(50), cost_history, label=f"lr={lr}")
+plt.xlabel("Iteration")
+plt.ylabel("Cost Function")
+plt.title("Cost Function vs. Iteration (Different Learning Rates)")
+plt.legend()
+plt.show()
+
+# --- Using stochastic and mini-batch gradient descent ---
+learning_rate = 0.01
+iterations = 1000
+batch_size = 32  
+
+# --- Stochastic Gradient Descent ---
+theta_sgd, cost_history_sgd = stochastic_gradient_descent(X, y, np.zeros(X.shape[1]), learning_rate, iterations)
+
+# --- Mini-Batch Gradient Descent ---
+theta_mbgd, cost_history_mbgd = mini_batch_gradient_descent(X, y, np.zeros(X.shape[1]), learning_rate, iterations, batch_size)
+
+theta_bgd, cost_history_bgd = gradient_descent(X, y, np.zeros(X.shape[1]), learning_rate, iterations) #This is the line to add to fix the code.
+
+# --- Plotting ---
+plt.plot(range(iterations), cost_history_bgd, label="Batch GD") # Change cost_history to cost_history_bgd
+plt.plot(range(iterations), cost_history_sgd, label="Stochastic GD")
+plt.plot(range(iterations), cost_history_mbgd, label="Mini-Batch GD")
+plt.xlabel("Iteration")
+plt.ylabel("Cost Function")
+plt.title("Comparison of Gradient Descent Methods")
+plt.legend()
+plt.show()
